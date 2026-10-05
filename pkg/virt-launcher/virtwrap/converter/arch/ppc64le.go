@@ -45,7 +45,7 @@ func (converterPPC64) IsUSBNeeded(_ *v1.VirtualMachineInstance) bool {
 }
 
 func (converterPPC64) SupportCPUHotplug() bool {
-	return true
+	return false
 }
 
 func (converterPPC64) IsSMBiosNeeded() bool {

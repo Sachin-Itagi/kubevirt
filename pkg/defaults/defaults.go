@@ -74,7 +74,7 @@ func SetDefaultVirtualMachineInstance(clusterConfig *virtconfig.ClusterConfig, v
 	setCurrentCPUTopologyStatus(vmi)
 
 	// Hotplug needs to be enabled on ARM yet
-	if !IsARM64(&vmi.Spec) {
+	if !IsARM64(&vmi.Spec) && !IsPPC64LE(&vmi.Spec) {
 		setupHotplug(clusterConfig, vmi)
 	}
 

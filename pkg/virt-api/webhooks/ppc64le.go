@@ -34,7 +34,49 @@ func ValidateVirtualMachineInstancePPC64LESetting(field *k8sfield.Path, spec *v1
 	var statusCauses []metav1.StatusCause
 	validateWatchdogPpc64le(field, spec, &statusCauses)
 	validateVideoTypePpc64le(field, spec, &statusCauses)
+	validateACPIPpc64le(field, spec, &statusCauses)
+	validateSMMPpc64le(field, spec, &statusCauses)
+	validateEFIPpc64le(field, spec, &statusCauses)
 	return statusCauses
+}
+
+func validateACPIPpc64le(field *k8sfield.Path, spec *v1.VirtualMachineInstanceSpec, statusCauses *[]metav1.StatusCause) {
+	features := spec.Domain.Features
+	if features == nil || features.ACPI.Enabled == nil || !*features.ACPI.Enabled {
+		return
+	}
+
+	*statusCauses = append(*statusCauses, metav1.StatusCause{
+		Type:    metav1.CauseTypeFieldValueNotSupported,
+		Message: "ACPI is not supported on ppc64le architecture",
+		Field:   field.Child("domain", "features", "acpi", "enabled").String(),
+	})
+}
+
+func validateSMMPpc64le(field *k8sfield.Path, spec *v1.VirtualMachineInstanceSpec, statusCauses *[]metav1.StatusCause) {
+	features := spec.Domain.Features
+	if features == nil || features.SMM == nil || (features.SMM.Enabled != nil && !*features.SMM.Enabled) {
+		return
+	}
+
+	*statusCauses = append(*statusCauses, metav1.StatusCause{
+		Type:    metav1.CauseTypeFieldValueNotSupported,
+		Message: "SMM is not supported on ppc64le architecture",
+		Field:   field.Child("domain", "features", "smm").String(),
+	})
+}
+
+func validateEFIPpc64le(field *k8sfield.Path, spec *v1.VirtualMachineInstanceSpec, statusCauses *[]metav1.StatusCause) {
+	firmware := spec.Domain.Firmware
+	if firmware == nil || firmware.Bootloader == nil || firmware.Bootloader.EFI == nil {
+		return
+	}
+
+	*statusCauses = append(*statusCauses, metav1.StatusCause{
+		Type:    metav1.CauseTypeFieldValueNotSupported,
+		Message: "EFI boot is not supported on ppc64le architecture",
+		Field:   field.Child("domain", "firmware", "bootloader", "efi").String(),
+	})
 }
 
 func validateWatchdogPpc64le(field *k8sfield.Path, spec *v1.VirtualMachineInstanceSpec, statusCauses *[]metav1.StatusCause) {

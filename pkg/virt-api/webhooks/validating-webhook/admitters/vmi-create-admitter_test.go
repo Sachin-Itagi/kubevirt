@@ -4013,6 +4013,56 @@ var _ = Describe("Validating VMICreate Admitter", func() {
 
 			Entry("no watchdog configured", nil, "", false),
 		)
+
+		DescribeTable("validate ACPI and SMM features for ppc64le",
+			func(features *v1.Features, expectedField, expectedMessage string) {
+				vmi.Spec.Domain.Features = features
+				causes := webhooks.ValidateVirtualMachineInstancePPC64LESetting(k8sfield.NewPath("fake"), &vmi.Spec)
+
+				if expectedMessage == "" {
+					Expect(causes).To(BeEmpty())
+					return
+				}
+				Expect(causes).To(HaveLen(1))
+				Expect(causes[0].Field).To(Equal(expectedField))
+				Expect(causes[0].Message).To(Equal(expectedMessage))
+			},
+			Entry("no features configured is accepted", nil, "", ""),
+			Entry("ACPI unset is accepted", &v1.Features{}, "", ""),
+			Entry("ACPI disabled is accepted", &v1.Features{ACPI: v1.FeatureState{Enabled: pointer.P(false)}}, "", ""),
+			Entry("ACPI enabled is rejected", &v1.Features{ACPI: v1.FeatureState{Enabled: pointer.P(true)}},
+				"fake.domain.features.acpi.enabled", "ACPI is not supported on ppc64le architecture"),
+			Entry("SMM disabled is accepted", &v1.Features{SMM: &v1.FeatureState{Enabled: pointer.P(false)}}, "", ""),
+			Entry("SMM enabled is rejected", &v1.Features{SMM: &v1.FeatureState{Enabled: pointer.P(true)}},
+				"fake.domain.features.smm", "SMM is not supported on ppc64le architecture"),
+			Entry("SMM with nil enabled (defaults to enabled) is rejected", &v1.Features{SMM: &v1.FeatureState{}},
+				"fake.domain.features.smm", "SMM is not supported on ppc64le architecture"),
+		)
+
+		DescribeTable("validate EFI bootloader for ppc64le",
+			func(firmware *v1.Firmware, expectedMessage string) {
+				vmi.Spec.Domain.Firmware = firmware
+				causes := webhooks.ValidateVirtualMachineInstancePPC64LESetting(k8sfield.NewPath("fake"), &vmi.Spec)
+
+				if expectedMessage == "" {
+					Expect(causes).To(BeEmpty())
+					return
+				}
+				Expect(causes).To(HaveLen(1))
+				Expect(causes[0].Field).To(Equal("fake.domain.firmware.bootloader.efi"))
+				Expect(causes[0].Message).To(Equal(expectedMessage))
+			},
+			Entry("no firmware configured is accepted", nil, ""),
+			Entry("firmware without bootloader is accepted", &v1.Firmware{}, ""),
+			Entry("empty bootloader is accepted", &v1.Firmware{Bootloader: &v1.Bootloader{}}, ""),
+			Entry("BIOS bootloader is accepted", &v1.Firmware{Bootloader: &v1.Bootloader{BIOS: &v1.BIOS{}}}, ""),
+			Entry("EFI is rejected", &v1.Firmware{Bootloader: &v1.Bootloader{EFI: &v1.EFI{}}},
+				"EFI boot is not supported on ppc64le architecture"),
+			Entry("EFI with secure boot enabled is rejected", &v1.Firmware{Bootloader: &v1.Bootloader{EFI: &v1.EFI{SecureBoot: pointer.P(true)}}},
+				"EFI boot is not supported on ppc64le architecture"),
+			Entry("EFI with secure boot disabled is rejected", &v1.Firmware{Bootloader: &v1.Bootloader{EFI: &v1.EFI{SecureBoot: pointer.P(false)}}},
+				"EFI boot is not supported on ppc64le architecture"),
+		)
 	})
 
 	Context("with VideoConfig", func() {

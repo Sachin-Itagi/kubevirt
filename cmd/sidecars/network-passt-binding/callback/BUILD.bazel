@@ -5,7 +5,10 @@ go_library(
     srcs = ["callback.go"],
     importpath = "kubevirt.io/kubevirt/cmd/sidecars/network-passt-binding/callback",
     visibility = ["//visibility:public"],
-    deps = ["//pkg/virt-launcher/virtwrap/api:go_default_library"],
+    deps = [
+        "//pkg/virt-launcher/virtwrap/api:go_default_library",
+        "//pkg/virt-launcher/virtwrap/converter/translate:go_default_library",
+    ],
 )
 
 go_test(

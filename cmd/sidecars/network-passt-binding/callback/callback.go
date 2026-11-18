@@ -23,6 +23,8 @@ import (
 	"encoding/xml"
 	"fmt"
 
+	"kubevirt.io/kubevirt/pkg/virt-launcher/virtwrap/converter/translate"
+
 	domainschema "kubevirt.io/kubevirt/pkg/virt-launcher/virtwrap/api"
 )
 
@@ -43,6 +45,7 @@ func OnDefineDomain(domainXML []byte, domSpecMutator domainSpecMutator) ([]byte,
 	if err := xml.Unmarshal(domainXML, domainSpec); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal given domain spec: %v", err)
 	}
+	translate.TransferQEMUCommandline(string(domainXML), domainSpec)
 
 	updatedDomainSpec, err := domSpecMutator.Mutate(domainSpec)
 	if err != nil {

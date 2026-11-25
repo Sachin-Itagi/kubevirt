@@ -90,7 +90,32 @@ var _ = Describe("VMI traits", func() {
 		func(vmi *v1.VirtualMachineInstance, expected bool) {
 			Expect(vmitrait.RequiresLockingMemory(vmi)).To(Equal(expected))
 		},
+		Entry("nil VMI", nil, false),
 		Entry("Domain Memory reference is nil", &v1.VirtualMachineInstance{}, false),
+		Entry("ppc64le architecture",
+			&v1.VirtualMachineInstance{Spec: v1.VirtualMachineInstanceSpec{
+				Architecture: "ppc64le",
+			}},
+			true,
+		),
+		Entry("amd64 architecture without MemLock requirement",
+			&v1.VirtualMachineInstance{Spec: v1.VirtualMachineInstanceSpec{
+				Architecture: "amd64",
+			}},
+			false,
+		),
+		Entry("arm64 architecture without MemLock requirement",
+			&v1.VirtualMachineInstance{Spec: v1.VirtualMachineInstanceSpec{
+				Architecture: "arm64",
+			}},
+			false,
+		),
+		Entry("s390x architecture without MemLock requirement",
+			&v1.VirtualMachineInstance{Spec: v1.VirtualMachineInstanceSpec{
+				Architecture: "s390x",
+			}},
+			false,
+		),
 		Entry("ReservedOverhead reference is nil",
 			&v1.VirtualMachineInstance{Spec: v1.VirtualMachineInstanceSpec{Domain: v1.DomainSpec{
 				Memory: &v1.Memory{},

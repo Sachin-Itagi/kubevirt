@@ -41,6 +41,12 @@ func RequiresMemoryOverheadReservation(v *v1.VirtualMachineInstance) bool {
 }
 
 func RequiresLockingMemory(v *v1.VirtualMachineInstance) bool {
+	if v == nil {
+		return false
+	}
+	if v.Spec.Architecture == "ppc64le" {
+		return true
+	}
 	return v.Spec.Domain.Memory != nil &&
 		v.Spec.Domain.Memory.ReservedOverhead != nil &&
 		v.Spec.Domain.Memory.ReservedOverhead.MemLock != nil &&
